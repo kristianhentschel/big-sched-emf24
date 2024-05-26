@@ -4,6 +4,7 @@
   import { onMount } from "svelte";
 
   export let schedule;
+  export let faves;
   export let view;
 
   if (!view.venues) {
@@ -35,6 +36,10 @@
     }
     if (!dayEnd[day] || event.end.toMillis() > dayEnd[day]) {
       dayEnd[day] = event.end.toMillis();
+    }
+
+    if (faves && faves.includes(event.id)) {
+      event.is_fave = true;
     }
     // console.log(`${event.title} ${event.end_time}, ${event.end.toMillis()}`);
   });
@@ -151,6 +156,15 @@
     font-size: 10pt;
   }
 
+  :global(a) {
+    &:link {
+      color: #00f;
+    }
+    &:visited {
+      color: #60f;
+    }
+  }
+
   $scale: calc(
     1.25 * 6rem / 3600 / 1000
   ); // 6 lines per hour, most talks need 2 lines and are 20 minutes long
@@ -193,12 +207,20 @@
 
     &.fave {
       background: #fcc;
-      border: 2px double #f33;
+
+      .title:after {
+        content: "<3";
+        font-family: monospace;
+        font-size: 0.6em;
+        vertical-align: super;
+        font-weight: bold;
+        color: #c00;
+      }
     }
 
     &.not-recorded {
-      background: #eee;
-      border: 1px dashed #00f;
+      border-color: black;
+      border-style: dashed;
     }
 
     .title {
@@ -225,6 +247,8 @@
     .description {
       white-space: pre-wrap;
       line-height: 1.2;
+      text-align: justify;
+      hyphens: auto;
     }
 
     position: absolute;
