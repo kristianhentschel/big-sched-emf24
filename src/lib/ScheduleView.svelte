@@ -1,6 +1,7 @@
 <script lang="ts">
   import { DateTime } from "luxon";
   import { readSchedule } from "./schedule";
+  import { onMount } from "svelte";
 
   export let schedule;
   export let view;
@@ -31,6 +32,7 @@
     if (!dayEnd[day] || event.end.toMillis() > dayEnd[day]) {
       dayEnd[day] = event.end.toMillis();
     }
+    // console.log(`${event.title} ${event.end_time}, ${event.end.toMillis()}`);
   });
 
   const formatDay = (day: string) =>
@@ -38,6 +40,20 @@
       ...DateTime.DATE_SHORT,
       weekday: "long",
     });
+
+  let now_millis = 0;
+
+  onMount(() => {
+    const updateNow = () => {
+      now_millis = DateTime.now().plus({ days: 4 }).toMillis();
+    };
+
+    const t = setInterval(updateNow, 6000);
+
+    return () => {
+      clearInterval(t);
+    };
+  });
 </script>
 
 <h1>ScheduleView</h1>
@@ -48,18 +64,23 @@
   <h3>{formatDay(day)}</h3>
   <div
     class="day"
-    style="--day-start-millis: {dayStart[day]}; --day-end-millis: {dayEnd[day]}"
+    style="--day-start-millis: {dayStart[day]}; --day-end-millis: {dayEnd[
+      day
+    ]}; now-millis: {now_millis}"
   >
     {#each venues.filter((v) => view.venues[v]) as venue (venue)}
       <div class="venue-wrapper">
         <h4>{venue}</h4>
         <div class="venue">
+          {#if dayStart[day] <= now_millis && now_millis <= dayEnd[day]}
+            <hr class="now" />
+          {/if}
           {#each filteredEvents.filter((e) => e.venue === venue && e.start.toISODate() === day) as event (event.id)}
             <div
               class="event type-{event.type}"
               class:fave={event.is_fave}
+              class:not-recorded={!event.may_record}
               style="--start-millis: {event.start.toMillis()}; --end-millis: {event.end.toMillis()}"
-              title="{event.title}, {event.speaker}: {event.description}"
             >
               <h5 class="title">
                 <a href={event.link} target="_blank" tabindex="0"
@@ -70,6 +91,9 @@
                 {event.start.toLocaleString({ weekday: "short" })}
                 {event.start_time}-{event.end_time}
               </p>
+
+              <p class="speaker">{event.speaker}</p>
+              <p class="description">{event.description}</p>
             </div>
           {/each}
         </div>
@@ -115,9 +139,8 @@
   .day {
     display: flex;
     flex-direction: row;
-    gap: 4px;
+    gap: 8px;
     width: 100%;
-    height: calc((var(--day-end-millis) - var(--day-start-millis)) * $scale);
   }
 
   .venue-wrapper {
@@ -129,8 +152,8 @@
   .venue {
     display: flex;
     flex-direction: column;
-    gap: 4px;
     position: relative;
+    height: calc((var(--day-end-millis) - var(--day-start-millis)) * $scale);
   }
 
   .event {
@@ -145,8 +168,13 @@
     border: 1px solid #fc3;
 
     &.fave {
-      background: #fdd;
-      border: 1px dashed #f33;
+      background: #fcc;
+      border: 2px double #f33;
+    }
+
+    &.not-recorded {
+      background: #eee;
+      border: 1px dashed #00f;
     }
 
     .title {
@@ -157,20 +185,47 @@
       margin-bottom: 0.2em;
     }
 
-    .times {
-      margin: 0;
-      color: #333;
+    p {
+      margin: 0.2rem 0;
       font-size: 0.8rem;
+    }
+
+    .times {
+      color: #333;
+    }
+
+    .speaker {
+      font-weight: bold;
+    }
+
+    .description {
     }
 
     position: absolute;
     top: calc((var(--start-millis) - var(--day-start-millis)) * $scale);
-    height: calc((var(--end-millis) - var(--start-millis)) * $scale);
+    $height: calc((var(--end-millis) - var(--start-millis)) * $scale);
+    height: $height;
+    transform: scale(1);
+    box-shadow: 4px 4px rgba(0, 0, 0, 0);
+
+    transition: all 0.1s ease-out;
 
     &:hover,
     &:focus-within {
-      height: auto;
       z-index: 100;
+      height: auto;
+      min-height: $height;
+      transform: scale(1.01);
+      box-shadow: 4px 4px rgba(0, 0, 0, 0.5);
     }
+  }
+
+  .now {
+    position: absolute;
+    top: calc((var(--now-millis) - var(--day-start-millis)) * $scale);
+    border: none;
+    border-top: 1px solid red;
+    margin: 0;
+    margin-top: -1px;
   }
 </style>
