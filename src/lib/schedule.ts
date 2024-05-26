@@ -36,13 +36,16 @@ type Schedule = ScheduleEvent[]
 export const readSchedule = (data: Schedule): {
   days: string[],
   venues: string[],
+  types: string[],
   events: (ScheduleEvent & {
     start: DateTime,
     end: DateTime,
+    day: string,
   })[],
 } => {
   const days: Set<string> = new Set();
   const venues: Set<string> = new Set();
+  const types: Set<string> = new Set();
   const events = [];
 
   for (const event of data) {
@@ -50,22 +53,24 @@ export const readSchedule = (data: Schedule): {
 
     const start = DateTime.fromFormat(start_date, format, { zone });
     const end = DateTime.fromFormat(end_date, format, { zone });
+    const day = start.minus({ hours: 2 }).toISODate() ?? 'none'; // assume that nothing is scheduled to start after 2am the next morning
 
+    days.add(day);
     venues.add(venue);
-    if (start.isValid) {
-      days.add(start.toISODate())
-    }
+    types.add(event.type);
 
     events.push({
       ...event,
       start,
       end,
+      day,
     });
   }
 
   return {
     days: [...days].sort(),
     venues: [...venues].sort(),
+    types: [...types].sort(),
     events: events.sort((a, b) => a.start.toMillis() - b.start.toMillis()),
   }
 }

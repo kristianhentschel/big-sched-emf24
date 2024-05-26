@@ -14,18 +14,22 @@
     view.days = {};
   }
 
-  $: ({ days, venues, events } = readSchedule(schedule));
+  if (!view.types) {
+    view.types = {};
+  }
+
+  $: ({ days, venues, types, events } = readSchedule(schedule));
 
   $: filteredEvents = events.filter(
     (e) =>
-      view?.days?.[e.start.toISODate() ?? "none"] && view?.venues?.[e.venue],
+      view?.days?.[e.day] && view?.venues?.[e.venue] && view?.types?.[e.type],
   );
 
   const dayStart: { [key: string]: number } = {};
   const dayEnd: { [key: string]: number } = {};
 
   $: filteredEvents.forEach((event) => {
-    const day = event.start.toISODate() ?? "none";
+    const day = event.day;
     if (!dayStart[day] || event.start.toMillis() < dayStart[day]) {
       dayStart[day] = event.start.toMillis();
     }
@@ -41,12 +45,14 @@
       weekday: "long",
     });
 
-  let now_millis = 0;
+  let nowMillis = 0;
 
   onMount(() => {
     const updateNow = () => {
-      now_millis = DateTime.now().plus({ days: 4 }).toMillis();
+      nowMillis = DateTime.now().toMillis();
     };
+
+    updateNow();
 
     const t = setInterval(updateNow, 6000);
 
@@ -66,20 +72,21 @@
     class="day"
     style="--day-start-millis: {dayStart[day]}; --day-end-millis: {dayEnd[
       day
-    ]}; now-millis: {now_millis}"
+    ]}; --now-millis: {nowMillis};"
   >
     {#each venues.filter((v) => view.venues[v]) as venue (venue)}
       <div class="venue-wrapper">
         <h4>{venue}</h4>
         <div class="venue">
-          {#if dayStart[day] <= now_millis && now_millis <= dayEnd[day]}
+          {#if dayStart[day] <= nowMillis && nowMillis <= dayEnd[day]}
             <hr class="now" />
           {/if}
-          {#each filteredEvents.filter((e) => e.venue === venue && e.start.toISODate() === day) as event (event.id)}
+          {#each filteredEvents.filter((e) => e.venue === venue && e.day === day) as event (event.id)}
             <div
               class="event type-{event.type}"
               class:fave={event.is_fave}
               class:not-recorded={!event.may_record}
+              class:ended={event.end.toMillis() < nowMillis}
               style="--start-millis: {event.start.toMillis()}; --end-millis: {event.end.toMillis()}"
             >
               <h5 class="title">
@@ -126,6 +133,18 @@
   {/each}
 </ul>
 
+<h2>Types</h2>
+<ul>
+  {#each types as t (t)}
+    <li>
+      <label>
+        <input type="checkbox" name={t} bind:checked={view.types[t]} />
+        {t}
+      </label>
+    </li>
+  {/each}
+</ul>
+
 <style lang="scss">
   :global(html, body) {
     font-family: sans-serif;
@@ -167,6 +186,11 @@
     background: #fed;
     border: 1px solid #fc3;
 
+    &.ended {
+      opacity: 0.5;
+      text-decoration: line-through;
+    }
+
     &.fave {
       background: #fcc;
       border: 2px double #f33;
@@ -199,6 +223,8 @@
     }
 
     .description {
+      white-space: pre-wrap;
+      line-height: 1.2;
     }
 
     position: absolute;
@@ -224,8 +250,12 @@
     position: absolute;
     top: calc((var(--now-millis) - var(--day-start-millis)) * $scale);
     border: none;
-    border-top: 1px solid red;
+    border-top: 3px solid red;
     margin: 0;
     margin-top: -1px;
+    width: 100%;
+    z-index: 10;
+    opacity: 40%;
+    pointer-events: none;
   }
 </style>
