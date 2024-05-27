@@ -102,9 +102,14 @@
               <p class="times">
                 {event.start.toLocaleString({ weekday: "short" })}
                 {event.start_time}-{event.end_time}
+
+                {event.venue}
               </p>
 
               <p class="speaker">{event.speaker}</p>
+              {#if event.content_note}
+                <p class="description">Content note: {event.content_note}</p>
+              {/if}
               <p class="description">{event.description}</p>
             </div>
           {/each}

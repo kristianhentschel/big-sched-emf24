@@ -68,8 +68,9 @@
       } catch (e) {
         console.log("failed to parse hash");
       }
-      mounted = true;
     }
+    mounted = true;
+    updateHash(view);
   });
 
   /*
@@ -114,7 +115,7 @@
   <title>EMF 2024 BigSched</title>
 </svelte:head>
 
-<ScheduleView {schedule} {faves} {view} />
+<ScheduleView {schedule} {faves} bind:view />
 
 <!--
 <h1>Favourites</h1>
