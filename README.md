@@ -1,38 +1,15 @@
-# create-svelte
+# Big Sched
 
-Everything you need to build a Svelte project, powered by [`create-svelte`](https://github.com/sveltejs/kit/tree/main/packages/create-svelte).
+This is an inofficial viewer for the EMF Camp 2024 schedule.
 
-## Creating a project
+By default this shows the [public schedule](https://www.emfcamp.org/schedule/2024.json) from the [JSON feed](https://developer.emfcamp.org/schedule/).
 
-If you're seeing this, you've probably already done this step. Congrats!
+To highlight your favourites, copy the JSON feed URL from https://www.emfcamp.org/favourites and run the app locally (assuming you're on a Mac/Linux and have git and Node.JS installed):
 
-```bash
-# create a new project in the current directory
-npm create svelte@latest
-
-# create a new project in my-app
-npm create svelte@latest my-app
+```sh
+git clone https://github.com/kristianhentschel/big-sched-emf24.git && cd big-sched-emf24
+npm install
+FAVES_URL=https://www.emfcamp.org/favourites.json?token=xxxx-xxxxxxxxxxxxxxxxxxxx npm run dev
 ```
 
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```bash
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
-
-## Building
-
-To create a production version of your app:
-
-```bash
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://kit.svelte.dev/docs/adapters) for your target environment.
+If you want to change it up, the layout and style (HTML-ish, JavaScript, SCSS) is mainly in [ScheduleView.svelte](./src/lib/ScheduleView.svelte).

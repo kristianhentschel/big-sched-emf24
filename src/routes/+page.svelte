@@ -117,6 +117,17 @@
 
 <ScheduleView {schedule} {faves} bind:view />
 
+<p>
+  More info on <a href="https://github.com/kristianhentschel/big-sched-emf24"
+    >GitHub</a
+  >. Made by Kristian Hentschel. This is a quick hack - no warranties of any
+  kind implied. I take no responsibility for the consequences or lack thereof of
+  relying on this page. View the
+  <a href="https://www.emfcamp.org/schedule/2024"
+    >the official schedule at emfcamp.org</a
+  >.
+</p>
+
 <!--
 <h1>Favourites</h1>
 
