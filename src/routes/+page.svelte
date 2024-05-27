@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { browser } from "$app/environment";
   import ScheduleView from "$lib/ScheduleView.svelte";
   import { onMount } from "svelte";
 
@@ -6,13 +7,70 @@
 
   const { schedule, faves } = data;
 
-  let view = {
+  type View = { [key: string]: { [key: string]: boolean } };
+
+  let view: View = {
     venues: {
       "Stage A": true,
       "Stage B": true,
       "Stage C": true,
     },
+    days: {
+      "2024-05-30": true,
+      "2024-05-31": true,
+      "2024-06-01": true,
+      "2024-06-02": true,
+    },
+    types: {
+      performance: true,
+      talk: true,
+      workshop: true,
+      youthworkshop: true,
+    },
   };
+
+  let mounted = false;
+  const updateHash = (view: View) => {
+    if (!browser || !mounted) return;
+
+    const params = new URLSearchParams();
+
+    for (const key of ["venues", "days", "types"]) {
+      if (key in view) {
+        params.set(
+          key,
+          Object.keys(view[key])
+            .filter((v) => view[key][v])
+            .join(","),
+        );
+      }
+    }
+
+    location.hash = params.toString();
+  };
+
+  $: updateHash(view);
+
+  onMount(() => {
+    if (browser && location.hash) {
+      try {
+        const params = new URLSearchParams(`?${location.hash.slice(1)}`);
+        const newView: typeof view = {};
+        for (const key of ["venues", "days", "types"]) {
+          if (params.has(key)) {
+            newView[key] = {};
+            for (const value of params.get(key)?.split(",") ?? []) {
+              newView[key][value] = true;
+            }
+          }
+        }
+        view = newView;
+      } catch (e) {
+        console.log("failed to parse hash");
+      }
+      mounted = true;
+    }
+  });
 
   /*
   let favUrl: string | undefined;
@@ -51,6 +109,10 @@
   });
   */
 </script>
+
+<svelte:head>
+  <title>EMF 2024 BigSched</title>
+</svelte:head>
 
 <ScheduleView {schedule} {faves} {view} />
 
