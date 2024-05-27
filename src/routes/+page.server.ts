@@ -1,24 +1,27 @@
-import { env } from '$env/dynamic/private';
+import { building } from '$app/environment';
 
 export const load = async ({ fetch }) => {
-  const response = await fetch("https://www.emfcamp.org/schedule/2024.json");
-  const schedule = await response.json();
-  console.log(`Fetched ${schedule.length} events.`);
-
   let faves: number[] = [];
 
-  if (env.FAVES_URL) {
-    const response = await fetch(env.FAVES_URL);
-    try {
-      faves = (await response.json()).map((f: { id: number }) => f.id);
-      console.log(`Fetched ${faves.length} faves.`);
-    } catch (e) {
-      console.log(e);
+  if (!building) {
+    const { env } = await import('$env/dynamic/private');
+
+    if (env.FAVES_URL) {
+      const response = await fetch(env.FAVES_URL);
+      try {
+        faves = (await response.json()).map((f: { id: number }) => f.id);
+        console.log(`Fetched ${faves.length} faves.`);
+      } catch (e) {
+        console.log(e);
+      }
+    } else {
+      console.log("Not loading faves because FAVES_URL is not set");
     }
+  } else {
+    console.log("Not loading faves because rendering a static site");
   }
 
   return {
-    schedule,
     faves,
   };
 };
