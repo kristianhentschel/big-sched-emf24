@@ -23,26 +23,38 @@
 
   $: filteredEvents = events.filter(
     (e) =>
-      view?.days?.[e.day] && view?.venues?.[e.venue] && view?.types?.[e.type],
+      view?.days?.[e.day] &&
+      (view?.venues?._other || view?.venues?.[e.venue]) &&
+      view?.types?.[e.type],
   );
 
-  const dayStart: { [key: string]: number } = {};
-  const dayEnd: { [key: string]: number } = {};
+  let dayStart: { [key: string]: number } = {};
+  let dayEnd: { [key: string]: number } = {};
 
-  $: filteredEvents.forEach((event) => {
-    const day = event.day;
-    if (!dayStart[day] || event.start.toMillis() < dayStart[day]) {
-      dayStart[day] = event.start.toMillis();
-    }
-    if (!dayEnd[day] || event.end.toMillis() > dayEnd[day]) {
-      dayEnd[day] = event.end.toMillis();
-    }
+  const updateDayTimes = (filteredEvents: any[]) => {
+    dayStart = {};
+    dayEnd = {};
 
-    if (faves && faves.includes(event.id)) {
-      event.is_fave = true;
-    }
-    // console.log(`${event.title} ${event.end_time}, ${event.end.toMillis()}`);
-  });
+    filteredEvents.forEach((event) => {
+      const day = event.day;
+      const maxDayEndMillis = DateTime.fromISO(day, { zone: "Europe/London" })
+        .set({ hour: 0 })
+        .plus({ hours: 26 })
+        .toMillis(); // Events that go on past 2 am may overflow the container
+      if (!dayStart[day] || event.start.toMillis() < dayStart[day]) {
+        dayStart[day] = event.start.toMillis();
+      }
+      if (!dayEnd[day] || event.end.toMillis() > dayEnd[day]) {
+        dayEnd[day] = Math.min(maxDayEndMillis, event.end.toMillis());
+      }
+
+      if (faves && faves.includes(event.id)) {
+        event.is_fave = true;
+      }
+    });
+  };
+
+  $: updateDayTimes(filteredEvents);
 
   const formatDay = (day: string) =>
     DateTime.fromISO(day).toLocaleString({
@@ -71,6 +83,17 @@
     type: true,
     venue: false,
   };
+
+  const eventsFor = (venue: string, day: string) => {
+    if (venue !== "_other") {
+      return filteredEvents.filter((e) => e.venue === venue && e.day === day);
+    } else {
+      const otherVenues = venues.filter((v) => !view.venues[v]);
+      return filteredEvents.filter(
+        (e) => e.day === day && otherVenues.includes(e.venue),
+      );
+    }
+  };
 </script>
 
 <h1 class="schedule-title">Schedule</h1>
@@ -85,14 +108,14 @@
       day
     ]}; --now-millis: {nowMillis};"
   >
-    {#each venues.filter((v) => view.venues[v]) as venue (venue)}
-      <div class="venue-wrapper">
+    {#each [...venues, "_other"].filter((v) => view.venues[v]) as venue (venue)}
+      <div class="venue-wrapper" class:other={venue === "_other"}>
         <h4 class="venue-title">{venue}</h4>
-        <div class="venue">
+        <div class="venue" class:other={venue === "_other"}>
           {#if dayStart[day] <= nowMillis && nowMillis <= dayEnd[day]}
             <hr class="now" />
           {/if}
-          {#each filteredEvents.filter((e) => e.venue === venue && e.day === day) as event (event.id)}
+          {#each eventsFor(venue, day) as event (event.id)}
             <div
               class="event type-{event.type}"
               class:fave={event.is_fave}
@@ -150,6 +173,16 @@
           </label>
         </li>
       {/each}
+      <li>
+        <label>
+          <input
+            type="checkbox"
+            name="_other"
+            bind:checked={view.venues["_other"]}
+          />
+          <em>Show unchecked venues in last column</em>
+        </label>
+      </li>
     </ul>
   </div>
   <div>
@@ -226,6 +259,10 @@
     width: 100%;
     flex-shrink: 1;
     max-width: 20em;
+    &.other {
+      flex-grow: 1;
+      max-width: 100%;
+    }
   }
 
   .venue {
@@ -245,6 +282,38 @@
 
     background: #fed;
     border: 1px solid #fc3;
+
+    .venue.other & {
+      opacity: 0.5;
+      width: 50%;
+
+      &:nth-child(5n + 0) {
+        left: 10%;
+      }
+
+      &:nth-child(5n + 1) {
+        left: 20%;
+      }
+
+      &:nth-child(5n + 2) {
+        left: 30%;
+      }
+
+      &:nth-child(5n + 3) {
+        left: 40%;
+      }
+
+      &:nth-child(5n + 3) {
+        left: 50%;
+      }
+
+      &:hover,
+      &:focus-within {
+        left: 0;
+        width: 100%;
+        opacity: 1;
+      }
+    }
 
     &.ended {
       opacity: 0.5;
