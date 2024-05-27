@@ -79,9 +79,9 @@
   });
 
   const showFilters = {
+    venue: true,
     day: true,
     type: true,
-    venue: false,
   };
 
   const eventsFor = (venue: string, day: string) => {
@@ -121,7 +121,10 @@
               class:fave={event.is_fave}
               class:not-recorded={!event.may_record}
               class:ended={event.end.toMillis() < nowMillis}
-              style="--start-millis: {event.start.toMillis()}; --end-millis: {event.end.toMillis()}"
+              style="--start-millis: {event.start.toMillis()}; --end-millis: {Math.min(
+                dayEnd[day],
+                event.end.toMillis(),
+              )}"
             >
               <h5 class="title">
                 <a href={event.link} target="_blank" tabindex="0"
