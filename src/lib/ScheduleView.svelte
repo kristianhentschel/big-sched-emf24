@@ -65,14 +65,20 @@
       clearInterval(t);
     };
   });
+
+  const showFilters = {
+    day: true,
+    type: true,
+    venue: false,
+  };
 </script>
 
-<h1>ScheduleView</h1>
+<h1 class="schedule-title">Schedule</h1>
 
-<h2>Events</h2>
+<h2 class="section-title">Events</h2>
 
 {#each days.filter((d) => view.days[d]) as day (day)}
-  <h3>{formatDay(day)}</h3>
+  <h3 class="day-title">{formatDay(day)}</h3>
   <div
     class="day"
     style="--day-start-millis: {dayStart[day]}; --day-end-millis: {dayEnd[
@@ -81,7 +87,7 @@
   >
     {#each venues.filter((v) => view.venues[v]) as venue (venue)}
       <div class="venue-wrapper">
-        <h4>{venue}</h4>
+        <h4 class="venue-title">{venue}</h4>
         <div class="venue">
           {#if dayStart[day] <= nowMillis && nowMillis <= dayEnd[day]}
             <hr class="now" />
@@ -119,41 +125,76 @@
   </div>
 {/each}
 
-<h2>Venues</h2>
-<ul>
-  {#each venues as venue (venue)}
-    <li>
-      <label>
-        <input type="checkbox" name={venue} bind:checked={view.venues[venue]} />
-        {venue}
-      </label>
-    </li>
-  {/each}
-</ul>
-
-<h2>Days</h2>
-<ul>
-  {#each days as day (day)}
-    <li>
-      <label>
-        <input type="checkbox" name={day} bind:checked={view.days[day]} />
-        {formatDay(day)}
-      </label>
-    </li>
-  {/each}
-</ul>
-
-<h2>Types</h2>
-<ul>
-  {#each types as t (t)}
-    <li>
-      <label>
-        <input type="checkbox" name={t} bind:checked={view.types[t]} />
-        {t}
-      </label>
-    </li>
-  {/each}
-</ul>
+<h2 class="section-title">Filters</h2>
+<div class="filters">
+  <div>
+    <h3 class="filter-title">
+      <label
+        >Venues <input
+          title="show venue filters"
+          type="checkbox"
+          bind:checked={showFilters["venue"]}
+        /></label
+      >
+    </h3>
+    <ul class:hidden={!showFilters["venue"]}>
+      {#each venues as venue (venue)}
+        <li>
+          <label>
+            <input
+              type="checkbox"
+              name={venue}
+              bind:checked={view.venues[venue]}
+            />
+            {venue}
+          </label>
+        </li>
+      {/each}
+    </ul>
+  </div>
+  <div>
+    <h3 class="filter-title">
+      <label
+        >Days <input
+          title="show day filters"
+          type="checkbox"
+          bind:checked={showFilters["day"]}
+        /></label
+      >
+    </h3>
+    <ul class:hidden={!showFilters["day"]}>
+      {#each days as day (day)}
+        <li>
+          <label>
+            <input type="checkbox" name={day} bind:checked={view.days[day]} />
+            {formatDay(day)}
+          </label>
+        </li>
+      {/each}
+    </ul>
+  </div>
+  <div>
+    <h3 class="filter-title">
+      <label
+        >Types <input
+          title="show type filters"
+          type="checkbox"
+          bind:checked={showFilters["type"]}
+        /></label
+      >
+    </h3>
+    <ul class:hidden={!showFilters["type"]}>
+      {#each types as t (t)}
+        <li>
+          <label>
+            <input type="checkbox" name={t} bind:checked={view.types[t]} />
+            {t}
+          </label>
+        </li>
+      {/each}
+    </ul>
+  </div>
+</div>
 
 <style lang="scss">
   :global(html, body) {
@@ -286,5 +327,42 @@
     z-index: 10;
     opacity: 40%;
     pointer-events: none;
+  }
+
+  .day-title,
+  .venue-title {
+    background: #eee;
+    padding: 8px;
+    text-align: center;
+    margin: 0;
+    margin-bottom: 8px;
+  }
+
+  .day-title {
+    margin-top: 8px;
+  }
+
+  .filters {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+  }
+
+  .hidden {
+    display: none;
+  }
+
+  .section-title {
+    margin: 8px 0;
+  }
+
+  .filter-title {
+    margin: 4px 0;
+  }
+
+  .filters ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
   }
 </style>
