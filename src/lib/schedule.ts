@@ -17,7 +17,7 @@ type ScheduleEvent = {
   user_id: number,
   description: string,
   type: string,
-  may_record: boolean,
+  // may_record: boolean,
   is_fave: boolean,
   is_family_friendly: boolean,
   is_from_cfp: boolean,
@@ -27,6 +27,7 @@ type ScheduleEvent = {
   video: {
     recording_lost: null
   },
+  video_privacy: "none" | "public" | "review" | undefined,
   start_time: string,
   end_time: string,
 };

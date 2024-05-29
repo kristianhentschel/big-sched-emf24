@@ -119,7 +119,9 @@
             <div
               class="event type-{event.type}"
               class:fave={event.is_fave}
-              class:not-recorded={!event.may_record}
+              class:not-recorded={!["public"].includes(
+                event?.video_privacy ?? "n/a",
+              )}
               class:ended={event.end.toMillis() < nowMillis}
               style="--start-millis: {event.start.toMillis()}; --end-millis: {Math.min(
                 dayEnd[day],
