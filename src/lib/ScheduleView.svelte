@@ -6,6 +6,7 @@
   export let schedule;
   export let faves;
   export let view;
+  export let shifts;
 
   if (!view.venues) {
     view.venues = {};
@@ -85,14 +86,21 @@
   };
 
   const eventsFor = (venue: string, day: string) => {
-    if (venue !== "_other") {
-      return filteredEvents.filter((e) => e.venue === venue && e.day === day);
-    } else {
+    if (venue === "_other") {
       const otherVenues = venues.filter((v) => !view.venues[v]);
       return filteredEvents.filter(
         (e) => e.day === day && otherVenues.includes(e.venue),
       );
+    } else if (venue === "_shifts") {
+      return shifts.filter((e) => e.day === day);
+    } else {
+      return filteredEvents.filter((e) => e.venue === venue && e.day === day);
     }
+  };
+
+  const specialVenues: { [key: string]: string } = {
+    _other: "Other venues",
+    _shifts: "Volunteer shifts",
   };
 </script>
 
@@ -108,9 +116,13 @@
       day
     ]}; --now-millis: {nowMillis};"
   >
-    {#each [...venues, "_other"].filter((v) => view.venues[v]) as venue (venue)}
-      <div class="venue-wrapper" class:other={venue === "_other"}>
-        <h4 class="venue-title">{venue}</h4>
+    {#each [...venues, "_other", "_shifts"].filter((v) => view.venues[v]) as venue (venue)}
+      <div
+        class="venue-wrapper"
+        class:shifts={venue === "_shifts"}
+        class:other={venue === "_other"}
+      >
+        <h4 class="venue-title">{specialVenues[venue] ?? venue}</h4>
         <div class="venue" class:other={venue === "_other"}>
           {#if dayStart[day] <= nowMillis && nowMillis <= dayEnd[day]}
             <hr class="now" />
@@ -140,11 +152,15 @@
                 {event.venue}
               </p>
 
-              <p class="speaker">{event.speaker}</p>
+              {#if event.speaker}
+                <p class="speaker">{event.speaker}</p>
+              {/if}
               {#if event.content_note}
                 <p class="description">Content note: {event.content_note}</p>
               {/if}
-              <p class="description">{event.description}</p>
+              {#if event.description}
+                <p class="description">{event.description}</p>
+              {/if}
             </div>
           {/each}
         </div>
@@ -178,6 +194,16 @@
           </label>
         </li>
       {/each}
+      <li>
+        <label>
+          <input
+            type="checkbox"
+            name="_shifts"
+            bind:checked={view.venues["_shifts"]}
+          />
+          <em>Show volunteer shifts</em>
+        </label>
+      </li>
       <li>
         <label>
           <input
@@ -267,6 +293,15 @@
     &.other {
       flex-grow: 1;
       max-width: 100%;
+    }
+
+    &.shifts {
+      max-width: 10em;
+      flex-shrink: 2;
+
+      .event {
+        background: #9c6;
+      }
     }
   }
 
