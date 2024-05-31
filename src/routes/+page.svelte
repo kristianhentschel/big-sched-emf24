@@ -5,7 +5,8 @@
 
   export let data;
 
-  const { schedule, faves } = data;
+  const { schedule } = data;
+  let { faves } = data;
 
   type View = { [key: string]: { [key: string]: boolean } };
 
@@ -51,6 +52,7 @@
 
   $: updateHash(view);
 
+  let liveFaves = false;
   onMount(() => {
     if (browser && location.hash) {
       try {
@@ -73,42 +75,63 @@
     updateHash(view);
   });
 
-  /*
-  let favUrl: string | undefined;
-  let favourites: number[];
+  let localFaves = false;
+  const localFavesKey = "bigsched.faves";
 
-  const loadFavourites = async () => {
-    if (!favUrl) return;
-
-    const response = await fetch(favUrl);
-    const favourites = (await response.json()).map((f: { id: number }) => f.id);
-  };
-
-  const clearFavUrl = () => {
-    favUrl = undefined;
-    favourites = [];
-
-    window.localStorage.removeItem("favUrl");
-  };
-
-  const handleLoadFavourites = (e) => {
-    e.preventDefault();
-
-    loadFavourites();
+  const clearLocalFaves = () => {
+    window.localStorage.removeItem(localFavesKey);
+    faves = [];
+    localFaves = false;
   };
 
   onMount(async () => {
-    try {
-      const tmp = window.localStorage.getItem("favUrl");
-      if (tmp && new URL(tmp)) {
-        favUrl = favUrl;
-        await loadFavourites();
+    if (faves?.length) {
+      liveFaves = true;
+    } else {
+      try {
+        const tmp = window.localStorage.getItem(localFavesKey);
+        if (tmp) {
+          faves = (JSON.parse(tmp) as number[]).filter((f) =>
+            Number.isInteger(f),
+          );
+          localFaves = true;
+          console.log(
+            `Restored ${faves.length} favourites from local storage.`,
+          );
+        }
+      } catch (e) {
+        clearLocalFaves();
       }
-    } catch (e) {
-      clearFavUrl();
     }
   });
-  */
+
+  let favesFile: FileList;
+  const handleLoadFaves = async (e: Event) => {
+    e.preventDefault();
+
+    if (!favesFile?.length) {
+      return;
+    }
+
+    const result = (await new Promise((resolve, reject) => {
+      const f = favesFile[0];
+      console.log(favesFile);
+      const reader = new FileReader();
+      reader.readAsText(f);
+      reader.addEventListener("load", () => {
+        try {
+          resolve(JSON.parse(reader.result as string));
+        } catch (e) {
+          reject(e);
+        }
+      });
+    })) as { id: number }[];
+
+    faves = result.map(({ id }) => id);
+    window.localStorage.setItem(localFavesKey, JSON.stringify(faves));
+    localFaves = true;
+    console.log(`Imported ${faves.length} favourites from file.`);
+  };
 </script>
 
 <svelte:head>
@@ -128,22 +151,34 @@
   >.
 </p>
 
-<!--
-<h1>Favourites</h1>
+{#if !liveFaves}
+  <h1>Favourites</h1>
 
-<form on:submit={handleLoadFavourites}>
-  <p>
-    <label>Paste JSON feed URL: <input type="text" bind:value={favUrl} /></label
-    >
-    <button type="submit">load</button>
-    {#if favUrl}
-      <button type="button">clear</button>
-    {/if}
-  </p>
-  <p>
-    e.g. <code
-      >https://www.emfcamp.org/favourites.json?token=xxxx-xxxxxxxxxxxx</code
-    >
-  </p>
-</form>
--->
+  <form on:submit={handleLoadFaves}>
+    <p>
+      If you're logged in to the EMF site, go to <a
+        href="https://www.emfcamp.org/favourites"
+        target="_blank">Favourites</a
+      > and download a copy of the JSON feed. Then load that file below. This step
+      has to be repeated every time you add something to your favourites. This site
+      remembers the IDs of your favourites in your browser local storage for next
+      time.
+    </p>
+    <p>
+      <label
+        >Load favourites.json: <input
+          type="file"
+          bind:files={favesFile}
+          on:change={handleLoadFaves}
+          accept=".json"
+        /></label
+      >
+    </p>
+    <p>
+      <button type="submit">Import</button>
+      {#if localFaves}
+        <button type="button">Clear</button>
+      {/if}
+    </p>
+  </form>
+{/if}
