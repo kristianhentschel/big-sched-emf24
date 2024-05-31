@@ -330,7 +330,7 @@
       $num: 20;
       @for $i from 1 through $num {
         &:nth-child(#{$num}n + #{$i}) {
-          left: (math.div(50%, $num) * $i);
+          left: ((50% / $num) * $i);
           margin-top: (0.5em * $i);
         }
       }
