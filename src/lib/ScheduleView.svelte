@@ -433,6 +433,7 @@
     text-align: center;
     margin: 0;
     margin-bottom: 8px;
+    text-wrap: nowrap;
   }
 
   .day-title {
