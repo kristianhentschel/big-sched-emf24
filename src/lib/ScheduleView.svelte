@@ -327,24 +327,12 @@
       opacity: 0.5;
       width: 50%;
 
-      &:nth-child(5n + 0) {
-        left: 10%;
-      }
-
-      &:nth-child(5n + 1) {
-        left: 20%;
-      }
-
-      &:nth-child(5n + 2) {
-        left: 30%;
-      }
-
-      &:nth-child(5n + 3) {
-        left: 40%;
-      }
-
-      &:nth-child(5n + 3) {
-        left: 50%;
+      $num: 20;
+      @for $i from 1 through $num {
+        &:nth-child(#{$num}n + #{$i}) {
+          left: (math.div(50%, $num) * $i);
+          margin-top: (0.5em * $i);
+        }
       }
 
       &:hover,

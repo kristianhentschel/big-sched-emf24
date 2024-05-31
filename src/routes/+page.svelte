@@ -278,6 +278,7 @@
         /></label
       >
       {#if localFaves}
+        <br />
         {faves?.length} favourites imported.
         <button type="button" on:click={clearLocalFaves}>Clear</button>
       {/if}
@@ -310,6 +311,7 @@
       /></label
     >
     {#if shifts?.length}
+      <br />
       {shifts.length} shifts loaded.
       <button type="button" on:click={clearLocalShifts}>Clear</button>
     {/if}
